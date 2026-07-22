@@ -35,4 +35,4 @@ export class verifyDto {
   @IsString()
   @Length(6, 6)
   code!: string;
-}
+} 
