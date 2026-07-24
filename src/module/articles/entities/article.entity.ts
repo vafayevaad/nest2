@@ -8,4 +8,7 @@ export class Article extends BaseEntity {
   
   @Column()
   text!: string
+
+  @Column({nullable: true})
+  backgroundImage?: string
 }

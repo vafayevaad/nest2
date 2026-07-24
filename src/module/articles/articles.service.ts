@@ -9,8 +9,10 @@ import { Repository } from 'typeorm';
 export class ArticlesService {
   constructor(@InjectRepository(Article) private articelRepo: Repository<Article>) {}
 
-  async create(createArticleDto: CreateArticleDto) {
+  async create(createArticleDto: CreateArticleDto, file: Express.Multer.File): Promise<Article> {
     const article = this.articelRepo.create(createArticleDto)
+
+    article.backgroundImage = `http://localhost:4001/uploads`
     return await this.articelRepo.save(article)
   }
 
