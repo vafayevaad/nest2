@@ -1,7 +1,9 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { UserRole } from "src/common/enums/user-role";
 import { BaseEntity } from "src/database/entites/base.entity";
-import { Column, Entity } from "typeorm";
+import { Article } from "src/module/articles/entities/article.entity";
+import { Tag } from "src/module/tag/entities/tag.entity";
+import { Column, Entity, OneToMany } from "typeorm";
 
 
 @Entity({name: "auth"})
@@ -24,4 +26,11 @@ export class Auth extends BaseEntity {
 
   @Column({nullable: true, type: "bigint"})
   otpTime?: number;
+
+  //relations 
+  @OneToMany(() => Article, (article) => article.author)
+  articles?: Article[]
+
+  @OneToMany(() => Tag, (tag) => tag.author)
+  tags?: Tag[]
 }

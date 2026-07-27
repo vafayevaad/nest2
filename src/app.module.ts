@@ -5,6 +5,8 @@ import { Auth } from './module/auth/entities/auth.entities';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ArticlesModule } from './module/articles/articles.module';
 import { Article } from './module/articles/entities/article.entity';
+import { Tag } from './module/tag/entities/tag.entity';
+import { TagModule } from './module/tag/tag.module';
 
 @Module({
   imports: [
@@ -16,11 +18,12 @@ import { Article } from './module/articles/entities/article.entity';
       port: 5432,
       database: process.env.DB_NAME,
       password: process.env.DB_PASSWORD,
-      entities: [Auth, Article],
+      entities: [Auth, Article, Tag],
       synchronize: true,
     }),
     AuthModule,
     ArticlesModule,
+    TagModule
   ],
   controllers: [],
   providers: [],

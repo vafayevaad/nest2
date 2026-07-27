@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, HttpCode, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, HttpCode, UseInterceptors, UploadedFile, Req } from '@nestjs/common';
 import { ArticlesService } from './articles.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
@@ -37,8 +37,8 @@ export class ArticlesController {
       })
     })
   )
-  create(@Body() createArticleDto: CreateArticleDto, file: Express.Multer.File) {
-    return this.articlesService.create(createArticleDto, file);
+  create(@Body() createArticleDto: CreateArticleDto, file: Express.Multer.File, @Req() request: any) {
+    return this.articlesService.create(createArticleDto, file, request);
   }
 
   @ApiOkResponse({type: CreateArticleDto})
