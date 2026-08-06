@@ -15,8 +15,8 @@ export class Auth extends BaseEntity {
   @Column()
   email!: string;
 
-  @Column()
-  password!: string;
+  @Column({nullable: true})
+  password?: string;
 
   @Column({ type: "enum", enum: UserRole, default: UserRole.USER})
   role!: UserRole
@@ -27,6 +27,17 @@ export class Auth extends BaseEntity {
   @Column({nullable: true, type: "bigint"})
   otpTime?: number;
 
+  @Column({nullable: true})
+  lastname?: string;
+
+  @Column({nullable: true})
+  firstname?: string;
+
+  @Column({nullable: true})
+  profilePicture?: string;
+
+  @Column({nullable: true})
+  access_token?: string;
   //relations 
   @OneToMany(() => Article, (article) => article.author)
   articles?: Article[]

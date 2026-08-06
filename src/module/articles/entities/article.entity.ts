@@ -1,4 +1,5 @@
 import { BaseEntity } from "src/database/entites/base.entity";
+import { ArticleImage } from "src/module/article-images/entities/article-image.entity";
 import { Auth } from "src/module/auth/entities/auth.entities";
 import { Tag } from "src/module/tag/entities/tag.entity";
 import { Column, DeleteDateColumn, Entity, JoinColumn, ManyToOne, OneToMany } from "typeorm";
@@ -25,4 +26,7 @@ export class Article extends BaseEntity {
   @OneToMany(() => Tag, (tag) => tag.articles)
   @JoinColumn({name: "tag_id"})
   tags!: Tag[]
+
+  @OneToMany(() => ArticleImage, (articleImage) => articleImage.article, {nullable: true})
+  articleImages: ArticleImage[]
 }

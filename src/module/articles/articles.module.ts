@@ -1,15 +1,18 @@
 import { Module } from '@nestjs/common';
-import { ArticlesService } from './articles.service';
-import { ArticlesController } from './articles.controller';
+import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Article } from './entities/article.entity';
-import { AuthModule } from '../auth/auth.module';
 import { Tag } from '../tag/entities/tag.entity';
+import { ArticleImage } from '../article-images/entities/article-image.entity';
+import { ArticlesController } from './articles.controller';
+import { ArticlesService } from './articles.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Article, Tag]),
-    AuthModule,
+    TypeOrmModule.forFeature([Article, Tag, ArticleImage]),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+    }), 
   ],
   controllers: [ArticlesController],
   providers: [ArticlesService],

@@ -1,12 +1,20 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { Auth } from './entities/auth.entities';
-import * as nodemailer from 'nodemailer';
-import * as bcrypt from 'bcrypt';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import { CreateAuthDto, CreateLoginDto, verifyDto } from './dto/create-auth.dto';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { Auth } from "./entities/auth.entities";
+import * as nodemailer from "nodemailer";
+import * as bcrypt from "bcrypt";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { JwtService } from "@nestjs/jwt";
+import { ConfigService } from "@nestjs/config";
+import {
+  CreateAuthDto,
+  CreateLoginDto,
+  verifyDto,
+} from "./dto/create-auth.dto";
 
 @Injectable()
 export class AuthService {
@@ -18,10 +26,10 @@ export class AuthService {
     private config: ConfigService,
   ) {
     this.transporter = nodemailer.createTransport({
-      service: 'gmail',
+      service: "gmail",
       auth: {
-        user: this.config.get<string>('GOOGLE_EMAIL'),
-        pass: this.config.get<string>('GOOGLE_PASS'),
+        user: this.config.get<string>("GOOGLE_EMAIL"),
+        pass: this.config.get<string>("GOOGLE_PASS"),
       },
     });
   }
@@ -31,9 +39,11 @@ export class AuthService {
 
     const foundedUser = await this.authRepo.findOne({ where: { email } });
 
-    if (foundedUser) throw new UnauthorizedException('User already exist');
+    if (foundedUser) throw new UnauthorizedException("User already exist");
 
-    const randomCode = Array.from({ length: 6 }, () => Math.floor(Math.random() * 10)).join('');
+    const randomCode = Array.from({ length: 6 }, () =>
+      Math.floor(Math.random() * 10),
+    ).join("");
 
     const hashPassword = await bcrypt.hash(password, 12);
 
@@ -48,13 +58,13 @@ export class AuthService {
     await this.authRepo.save(user);
 
     await this.transporter.sendMail({
-      from: 'dianavafoyeva220@gmail.com',
+      from: "dianavafoyeva220@gmail.com",
       to: email,
-      subject: 'lesson',
+      subject: "lesson",
       text: `${randomCode}`,
     });
 
-    return 'Registered';
+    return "Registered";
   }
 
   async login(createLoginDto: CreateLoginDto): Promise<string> {
@@ -62,13 +72,21 @@ export class AuthService {
 
     const foundedUser = await this.authRepo.findOne({ where: { email } });
 
-    if (!foundedUser) throw new NotFoundException('User not found');
+    if (!foundedUser) throw new NotFoundException("User not found");
 
-    const randomCode = Array.from({ length: 6 }, () => Math.floor(Math.random() * 10)).join('');
+    if (!foundedUser.password) {
+      throw new UnauthorizedException(
+        "This account was registered via Google. Please login with Google",
+      );
+    }
 
     const compare = await bcrypt.compare(password, foundedUser.password);
 
-    if (!compare) throw new UnauthorizedException('Invalid password');
+    if (!compare) throw new UnauthorizedException("Invalid password");
+
+    const randomCode = Array.from({ length: 6 }, () =>
+      Math.floor(Math.random() * 10),
+    ).join("");
 
     await this.authRepo.update(foundedUser.id, {
       code: randomCode,
@@ -76,13 +94,13 @@ export class AuthService {
     });
 
     await this.transporter.sendMail({
-      from: 'dianavafoyeva220@gmail.com',
+      from: "dianavafoyeva220@gmail.com",
       to: email,
-      subject: 'lesson',
+      subject: "lesson",
       text: `${randomCode}`,
     });
 
-    return 'Please check your email';
+    return "Please check your email";
   }
 
   async verify(verifyDto: verifyDto) {
@@ -90,25 +108,68 @@ export class AuthService {
 
     const foundedUser = await this.authRepo.findOne({ where: { email } });
 
-    if (!foundedUser) throw new NotFoundException('User not found');
+    if (!foundedUser) throw new NotFoundException("User not found");
 
-    if (!foundedUser.code) throw new UnauthorizedException('Code not found');
+    if (!foundedUser.code) throw new UnauthorizedException("Code not found");
 
     if (foundedUser.otpTime && foundedUser.otpTime < Date.now())
-      throw new UnauthorizedException('Otp expired');
+      throw new UnauthorizedException("Otp expired");
 
-    if (foundedUser.code !== code) throw new UnauthorizedException('Wrong otp');
+    if (foundedUser.code !== code) throw new UnauthorizedException("Wrong otp");
 
-    await this.authRepo.update(foundedUser.id, { code: '', otpTime: 0 });
+    await this.authRepo.update(foundedUser.id, { code: "", otpTime: 0 });
 
     const payload = {
-       id: foundedUser.id,
-       email: foundedUser.email, 
-       role: foundedUser.role 
-      };
+      id: foundedUser.id,
+      email: foundedUser.email,
+      role: foundedUser.role,
+    };
 
     return {
       token: await this.jwtService.signAsync(payload),
     };
+  }
+
+  //google-auth
+  async openId(googleData: any) {
+    const { email, profilePicture, lastname, firstname, username } = googleData;
+
+    if (!email) {
+      throw new UnauthorizedException(
+        "Email not provided by OAuth provider. Please make sure your email is public/verified.",
+      );
+    }
+
+    const foundedUser = await this.authRepo.findOne({ where: { email } });
+
+    if (foundedUser) {
+      const payload = {
+        id: foundedUser.id,
+        email: foundedUser.email,
+        role: foundedUser.role,
+      };
+
+      return {
+        token: await this.jwtService.signAsync(payload),
+      };
+    } else {
+      const user = this.authRepo.create({
+        email,
+        username: username ? username : null,
+        lastname: lastname ? lastname : null,
+        firstname: firstname ? firstname : null,
+        profilePicture,
+      });
+
+      await this.authRepo.save(user);
+
+      return {
+        token: await this.jwtService.signAsync({
+          id: user.id,
+          email: user.email,
+          role: user.role,
+        }),
+      };
+    }
   }
 }
